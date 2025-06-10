@@ -11,7 +11,6 @@ local payload = ProtoField.bytes("opvencap.payload", "Payload")
 opvencap_protocol.fields = { sender_id, auth_token, reserved, payload }
 
 local base40 = {
-    "!",
     "A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
     "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T",
     "U", "V", "W", "X", "Y", "Z",
@@ -26,7 +25,7 @@ function decode_callsign(sender_id)
             callsign = "Invalid"
             return callsign
         end
-        callsign = callsign .. base40[remainder+1]
+        callsign = callsign .. base40[remainder]
         sender_id = (sender_id - remainder) / 40
         if sender_id == 0 then
             return callsign
