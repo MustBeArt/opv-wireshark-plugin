@@ -6,7 +6,9 @@ local sender_id = ProtoField.bytes("opvencap.sender_id", "Sender ID")
 local auth_token = ProtoField.bytes("opvencap.auth_token", "Authentication Token")
 local reserved = ProtoField.bytes("opvencap.reserved", "Reserved")
 
-opvencap_protocol.fields = { sender_id, auth_token, reserved }
+local payload = ProtoField.bytes("opvencap.payload", "Payload")
+
+opvencap_protocol.fields = { sender_id, auth_token, reserved, payload }
 
 local base40 = {
     "!",
@@ -48,9 +50,15 @@ function opvencap_protocol.dissector(buffer, pinfo, tree)
 
     -- Create a subtree for this protocol
     local subtree = tree:add(opvencap_protocol, buffer(), "Opulent Voice encapsulated protocol")
-    subtree:add(sender_id, buffer(0, 6)):append_text(" (" .. decode_callsign(sender) .. ")")
-    subtree:add(auth_token, buffer(6, 3)):append_text(" (Unverified)")
-    subtree:add(reserved, buffer(9, 3))
+    local headerSubtree = subtree:add(opvencap_protocol, buffer(0,12), "OPV Frame Header")
+    local payloadSubtree = subtree:add(opvencap_protocol, buffer(12, length-12), "Payload")
+
+
+    headerSubtree:add(sender_id, buffer(0, 6)):append_text(" (" .. decode_callsign(sender) .. ")")
+    headerSubtree:add(auth_token, buffer(6, 3)):append_text(" (Unverified)")
+    headerSubtree:add(reserved, buffer(9, 3))
+
+    payloadSubtree:add(payload, buffer(12, length - 12)):append_text(" (" .. (length - 12) .. " bytes)")
 end
 -- Add the dissector to the UDP port 57372
 local udp_port = DissectorTable.get("udp.port")
